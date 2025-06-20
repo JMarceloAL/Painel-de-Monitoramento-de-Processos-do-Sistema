@@ -1,9 +1,20 @@
-import psutil
-from psutil import virtual_memory,  cpu_percent, cpu_freq, disk_usage, disk_partitions, net_io_counters, boot_time
-import pynvml
-import subprocess
-import platform
+
+
 import datetime
+import platform
+import subprocess
+
+import psutil
+import pynvml
+from psutil import (
+    boot_time,
+    cpu_freq,
+    cpu_percent,
+    disk_partitions,
+    disk_usage,
+    net_io_counters,
+    virtual_memory
+)
 
 # Variável global para armazenar informações da GPU
 
@@ -47,7 +58,7 @@ def little_gpu_info():
 
 
 def detect_gpu_basic_info():
-    """Detecta informações básicas da GPU (modelo e fabricante)"""
+    # Detecta informações básicas da GPU (modelo e fabricante)
     info = {
         'fabricante': 'Desconhecido',
         'modelo': 'Não detectado',
@@ -64,14 +75,14 @@ def detect_gpu_basic_info():
         elif sistema == "Darwin":  # macOS
             info = detect_gpu_macos()
 
-    except Exception as e:
-        print(f"Erro ao detectar GPU: {e}")
+    except ValueError:
+        print("Erro ao detectar GPU")
 
     return info
 
 
 def detect_gpu_windows():
-    """Detecta GPU no Windows usando wmic"""
+    # Detecta GPU no Windows usando wmic
     info = {'fabricante': 'Desconhecido',
             'modelo': 'Não detectado', 'memoria_total': 'N/A'}
 
@@ -108,14 +119,14 @@ def detect_gpu_windows():
                                 info['memoria_total'] = f"{memoria_gb:.1f}GB"
 
                             break
-    except Exception as e:
-        print(f"Erro Windows GPU: {e}")
+    except ValueError:
+        print(f"Erro Windows GPU:")
 
     return info
 
 
 def detect_gpu_linux():
-    """Detecta GPU no Linux usando lspci"""
+    # Detecta GPU no Linux usando lspci
     info = {'fabricante': 'Desconhecido',
             'modelo': 'Não detectado', 'memoria_total': 'N/A'}
 
@@ -139,14 +150,14 @@ def detect_gpu_linux():
                     elif 'intel' in line_lower:
                         info['fabricante'] = 'Intel'
                     break
-    except Exception as e:
-        print(f"Erro Linux GPU: {e}")
+    except ValueError:
+        print(f"Erro Linux GPU:")
 
     return info
 
 
 def detect_gpu_macos():
-    """Detecta GPU no macOS usando system_profiler"""
+    # Detecta GPU no macOS usando system_profiler
     info = {'fabricante': 'Desconhecido',
             'modelo': 'Não detectado', 'memoria_total': 'N/A'}
 
@@ -173,14 +184,14 @@ def detect_gpu_macos():
                     elif any(x in gpu_lower for x in ['apple', 'm1', 'm2', 'm3']):
                         info['fabricante'] = 'Apple'
                     break
-    except Exception as e:
-        print(f"Erro macOS GPU: {e}")
+    except ValueError:
+        print(f"Erro macOS GPU:")
 
     return info
 
 
 def get_gpu_dynamic_info(fabricante):
-    """Obtém informações dinâmicas da GPU baseado no fabricante"""
+    # Obtém informações dinâmicas da GPU baseado no fabricante
     dynamic_info = {
         'temperatura': 'N/A',
         'utilizacao': 'N/A',
@@ -195,14 +206,14 @@ def get_gpu_dynamic_info(fabricante):
             dynamic_info = get_amd_info()
         elif fabricante == 'Intel':
             dynamic_info = get_intel_info()
-    except Exception as e:
-        print(f"Erro ao obter info dinâmica: {e}")
+    except ValueError:
+        print(f"Erro ao obter info dinâmica:")
 
     return dynamic_info
 
 
 def get_nvidia_info():
-    """Obtém informações dinâmicas da GPU NVIDIA"""
+    # Obtém informações dinâmicas da GPU NVIDIA
     info = {'temperatura': 'N/A', 'utilizacao': 'N/A',
             'memoria_usada': 'N/A', 'fan_speed': 'N/A'}
 
@@ -228,7 +239,7 @@ def get_nvidia_info():
 
             pynvml.nvmlShutdown()
 
-        except:
+        except ValueError:
             # Fallback para nvidia-smi
             result = subprocess.run([
                 'nvidia-smi',
@@ -242,14 +253,14 @@ def get_nvidia_info():
                 info['utilizacao'] = f"{util}%"
                 info['memoria_usada'] = f"{int(mem)/1024:.1f}GB"
 
-    except Exception as e:
-        print(f"Erro NVIDIA: {e}")
+    except ValueError:
+        print(f"Erro NVIDIA: ")
 
     return info
 
 
 def get_amd_info():
-    """Obtém informações dinâmicas da GPU AMD"""
+    # Obtém informações dinâmicas da GPU AMD
     info = {'temperatura': 'N/A', 'utilizacao': 'N/A',
             'memoria_usada': 'N/A', 'fan_speed': 'N/A'}
 
@@ -266,14 +277,14 @@ def get_amd_info():
                         if temp.replace('.', '').isdigit():
                             info['temperatura'] = f"{temp}°C"
                         break
-    except Exception as e:
-        print(f"Erro AMD: {e}")
+    except ValueError:
+        print(f"Erro AMD: ")
 
     return info
 
 
 def get_intel_info():
-    """Obtém informações dinâmicas da GPU Intel"""
+    # Obtém informações dinâmicas da GPU Intel
     info = {'temperatura': 'N/A', 'utilizacao': 'N/A',
             'memoria_usada': 'N/A', 'fan_speed': 'N/A'}
 
@@ -290,14 +301,14 @@ def get_intel_info():
                         if temp.replace('.', '').isdigit():
                             info['temperatura'] = f"{temp}°C"
                         break
-    except Exception as e:
-        print(f"Erro Intel: {e}")
+    except ValueError:
+        print(f"Erro Intel: ")
 
     return info
 
 
 def format_gpu_info(gpu_info):
-    """Formata as informações da GPU para exibição"""
+    # Formata as informações da GPU para exibição
     fabricante = gpu_info.get('fabricante', 'Desconhecido')
     modelo = gpu_info.get('modelo', 'Não detectado')
     temp = gpu_info.get('temperatura', 'N/A')
@@ -319,7 +330,7 @@ def format_gpu_info(gpu_info):
 
 
 def little_format_gpu_info(littlegpu_info):
-    """Formata as informações da GPU para exibição"""
+    # Formata as informações da GPU para exibição
     fabricante = littlegpu_info.get('fabricante', 'Desconhecido')
     modelo = littlegpu_info.get('modelo', 'Não detectado')
     temp = littlegpu_info.get('temperatura', 'N/A')
@@ -348,7 +359,7 @@ def get_network_speed(value):
 
 
 def bytes_to_gigas(value):
-    """Converte bytes para GB"""
+    # Converte bytes para GB
     return f'{value / 1024 / 1024 / 1024:.1f} GB'
 
 
@@ -375,7 +386,8 @@ def get_disk_used_space(value):
             percent = usage.percent
             result.append(
                 f"\n   {partition.device}: {total_gb:.1f}GB / {used_gb:.1f}GB\n   {percent}% \n")
-        except:
+        except ValueError:
+
             result.append(f"{partition.device}: 0GB")
 
     return " ".join(result)
@@ -447,7 +459,7 @@ def process_info_with_pid():
             processos.append(processo_info)
             processos_unicos[nome] = True  # Marca como já adicionado
 
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        except ValueError:
             continue
 
     return processos
@@ -481,7 +493,7 @@ def get_all_processes_by_name(process_name):
                     'pid': pid
                 })
 
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        except ValueError:
             continue
 
     return processos_mesmo_nome
@@ -500,12 +512,12 @@ def colum_memory():
     return f"{memoria.percent} %"
 
 
-selected_process = None
+SELECTED_PROCESS = None
 
 
 def on_item_select(event, listbox):
     # Função que seleciona todos os processos com o mesmo nome
-    global selected_process
+    global SELECTED_PROCESS
     selection = listbox.selection()
     if selection:
         item = listbox.item(selection[0])
@@ -517,7 +529,7 @@ def on_item_select(event, listbox):
             all_processes = get_all_processes_by_name(process_name)
 
             # Define o processo selecionado como uma lista de todos os processos com o mesmo nome
-            selected_process = {
+            SELECTED_PROCESS = {
                 'nome': process_name,
                 'processos': all_processes,  # Lista com todos os processos
                 'quantidade': len(all_processes)
@@ -526,19 +538,17 @@ def on_item_select(event, listbox):
 
 def terminate_process():
     # Função para finalizar o processo selecionado
-    global selected_process  # Precisa declarar como global para acessar a variável
+    global SELECTED_PROCESS  # Precisa declarar como global para acessar a variável
 
-    if not selected_process:
+    if not SELECTED_PROCESS:
         print("Aviso", "Nenhum processo selecionado!", "warning")
         return
 
     try:
-        # Verificar se selected_process tem a estrutura nova (com lista de processos)
-        if 'processos' in selected_process:
+        # Verificar se SELECTED_PROCESS tem a estrutura nova (com lista de processos)
+        if SELECTED_PROCESS.get("processos"):
             # Nova estrutura - finalizar todos os processos com o mesmo nome
-            processos_para_finalizar = selected_process['processos']
-            nome_processo = selected_process['nome']
-            quantidade = len(processos_para_finalizar)
+            processos_para_finalizar = SELECTED_PROCESS['processos']
 
             processos_finalizados = 0
             for processo_info in processos_para_finalizar:
@@ -551,23 +561,23 @@ def terminate_process():
                     try:
                         process.wait(timeout=3)
                         processos_finalizados += 1
-                    except psutil.TimeoutExpired:
+                    except ValueError:
                         # Se não terminou graciosamente, forçar encerramento
                         process.kill()
                         processos_finalizados += 1
 
-                except psutil.NoSuchProcess:
+                except ValueError:
                     print(
                         f"Processo PID {processo_info['pid']} não existe mais!")
-                except psutil.AccessDenied:
+                except ZeroDivisionError:
                     print(f"Acesso negado para PID {processo_info['pid']}!")
-                except Exception as e:
+                except ImportError:
                     print(
                         f"Erro ao finalizar PID {processo_info['pid']}: {str(e)}")
 
         else:
             # Estrutura antiga - finalizar um processo específico
-            pid = int(selected_process['pid'])
+            pid = int(SELECTED_PROCESS['pid'])
             process = psutil.Process(pid)
             process.terminate()
 
@@ -575,20 +585,20 @@ def terminate_process():
             try:
                 process.wait(timeout=3)
                 print(
-                    f"Processo {selected_process['nome']} (PID: {pid}) finalizado com sucesso!")
-            except psutil.TimeoutExpired:
+                    f"Processo {SELECTED_PROCESS['nome']} (PID: {pid}) finalizado com sucesso!")
+            except ValueError:
                 # Se não terminou graciosamente, forçar encerramento
                 process.kill()
                 print(
-                    f"Processo {selected_process['nome']} (PID: {pid}) forçado a encerrar!")
+                    f"Processo {SELECTED_PROCESS['nome']} (PID: {pid}) forçado a encerrar!")
 
         # Limpar seleção após finalizar
-        selected_process = None
+        SELECTED_PROCESS = None
 
-    except psutil.NoSuchProcess:
+    except ValueError:
         print("Erro", "O processo não existe mais!", "danger")
-        selected_process = None
-    except psutil.AccessDenied:
+        SELECTED_PROCESS = None
+    except ValueError:
         print(
             "Erro",
             "Acesso negado! Execute como administrador para finalizar este processo.",
@@ -596,7 +606,7 @@ def terminate_process():
         )
     except ValueError:
         print("Erro", "PID inválido!", "danger")
-    except Exception as e:
+    except ValueError:
         print("Erro", f"Erro ao finalizar processo: {str(e)}", "danger")
 
 
@@ -613,6 +623,7 @@ def user():
 
 
 def uptimes():
+    """Function printing python version"""
     boot_times = boot_time()
     uptime_segundos = datetime.datetime.now().timestamp() - boot_times
 

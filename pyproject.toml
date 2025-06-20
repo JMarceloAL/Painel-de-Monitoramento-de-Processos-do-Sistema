@@ -1,0 +1,7 @@
+[project]
+name = "painel-de-monitoramento-do-sistema"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["psutil","py3nvml","ttkboostrap",""]

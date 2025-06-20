@@ -1,9 +1,8 @@
 import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
 import subprocess
 import os
 import sys
-import psutil  # Você pode precisar instalar: pip install psutil
+import psutil
 from sistem_utils.system_utils import (
     get_memory_info,
     get_cpu_info,
@@ -49,40 +48,40 @@ frame_3.grid_propagate(False)
 
 # Criar labels
 label_7 = ttk.Label(top_frame, text="Carregando...",
-                    justify=CENTER, bootstyle="inverse-dark", wraplength=200, )
+                    justify="center", bootstyle="inverse-dark", wraplength=200, )
 label_7.grid(row=0, column=0,  sticky="ew", pady=15, padx=10)
 label_7.config(foreground="white")
 label = ttk.Label(frame_1, text="Carregando...",
-                  justify=CENTER, bootstyle="default", wraplength=155, anchor="center",)
+                  justify="center", bootstyle="default", wraplength=155, anchor="center",)
 label.grid(row=1, column=0,  padx=15, pady=10)
 label.config(foreground="white")
 
 label_2 = ttk.Label(frame_1, text="Carregando...",
-                    justify=CENTER, bootstyle="default", wraplength=155)
+                    justify="center", bootstyle="default", wraplength=155)
 label_2.grid(row=2, column=0,)
 label_2.config(foreground="white")
 
 label_3 = ttk.Label(frame_1, text="Carregando...",
-                    justify=CENTER, bootstyle="default", wraplength=155)
+                    justify="center", bootstyle="default", wraplength=155)
 label_3.grid(row=3, column=0,)
 label_3.config(foreground="white")
 
 label_4 = ttk.Label(frame_1, text="Carregando...",
-                    justify=CENTER, bootstyle="default", wraplength=155)
+                    justify="center", bootstyle="default", wraplength=155)
 label_4.grid(row=4, column=0,)
 label_4.config(foreground="white")
 
 label_5 = ttk.Label(frame_1, text="Carregando...",
-                    justify=CENTER, bootstyle="default", wraplength=155)
+                    justify="center", bootstyle="default", wraplength=155)
 label_5.grid(row=5, column=0,)
 label_5.config(foreground="white")
 
 label_6 = ttk.Label(frame_1, text="Carregando...",
-                    justify=CENTER, bootstyle="default", wraplength=155)
+                    justify="center", bootstyle="default", wraplength=155)
 label_6.grid(row=6, column=0,)
 label_6.config(foreground="white")
 label_8 = ttk.Label(top_frame, text="Carregando...",
-                    justify=CENTER, bootstyle="inverse-dark", wraplength=280)
+                    justify="center", bootstyle="inverse-dark", wraplength=280)
 label_8.grid(row=0, column=1, padx=40)
 label_8.config(foreground="white")
 
@@ -123,7 +122,6 @@ checkbox_var = ttk.BooleanVar()
 def controlar_little_py():
     # Controla a execução do little.py baseado no estado do checkbox
     global processo_little
-
     try:
         if checkbox_var.get():  # Se checkbox está marcado
             # Verificar se o processo já não está rodando

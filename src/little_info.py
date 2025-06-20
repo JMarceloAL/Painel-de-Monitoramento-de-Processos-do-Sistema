@@ -1,10 +1,6 @@
 
 import ttkbootstrap as ttk
-import ctypes
 from ctypes import windll
-
-from ttkbootstrap.constants import *
-
 from sistem_utils.system_utils import (
 
     get_cpu_info,
@@ -18,15 +14,11 @@ from sistem_utils.system_utils import (
 def hide_from_taskbar(window):
     hwnd = windll.user32.GetParent(window.winfo_id())
 
-    # Define novo estilo para não mostrar na barra de tarefas
-    # WS_EX_TOOLWINDOW = 0x00000080 (janela de ferramenta, não aparece na barra de tarefas)
-    # WS_EX_APPWINDOW = 0x00040000 (janela principal, aparece na barra de tarefas)
-    ex_style = windll.user32.GetWindowLongW(hwnd, -20)  # GWL_EXSTYLE = -20
-    ex_style = ex_style | 0x00000080  # Adiciona WS_EX_TOOLWINDOW
-    ex_style = ex_style & ~0x00040000  # Remove WS_EX_APPWINDOW
+    ex_style = windll.user32.GetWindowLongW(hwnd, -20)
+    ex_style = ex_style | 0x00000080
 
     windll.user32.SetWindowLongW(hwnd, -20, ex_style)
-    windll.user32.ShowWindow(hwnd, 5)  # SW_SHOW = 5
+    windll.user32.ShowWindow(hwnd, 5)
 
 
 root = ttk.Window(themename="superhero")
@@ -48,8 +40,8 @@ y_position = 10
 root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
 # Configurações de transparência e "sempre por cima"
-root.attributes('-alpha', 0.8)  # Transparência (0.0 = invisível, 1.0 = opaco)
-root.attributes('-topmost', True)  # Sempre por cima
+root.attributes('-alpha', 0.8)
+root.attributes('-topmost', True)
 # style
 
 
@@ -58,9 +50,6 @@ root.attributes('-topmost', True)  # Sempre por cima
 frame_1 = ttk.Frame(height=20, width=700, bootstyle="dark")
 frame_1.grid(row=0, column=0)
 frame_1.grid_propagate(False)
-
-
-# Botão
 
 
 # Label
