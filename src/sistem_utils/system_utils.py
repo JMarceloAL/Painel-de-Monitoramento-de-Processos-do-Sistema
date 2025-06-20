@@ -1,21 +1,18 @@
 import psutil
-from psutil import virtual_memory, cpu_percent, cpu_freq, disk_usage, disk_partitions, net_io_counters, process_iter
+from psutil import virtual_memory,  cpu_percent, cpu_freq, disk_usage, disk_partitions, net_io_counters, boot_time
 import pynvml
 import subprocess
 import platform
-import GPUtil
-import tkinter.messagebox as messagebox
-
+import datetime
 
 # Variável global para armazenar informações da GPU
-gpu_info_cache = None
 
 
 def get_gpu_info():
 
     # Obtém informações da GPU (NVIDIA, AMD ou Intel) e retorna formatado para exibição
 
-    global gpu_info_cache
+    gpu_info_cache = None
 
     # Cache das informações básicas da GPU (modelo, fabricante)
     if gpu_info_cache is None:
@@ -28,6 +25,25 @@ def get_gpu_info():
     gpu_info_cache.update(dynamic_info)
 
     return format_gpu_info(gpu_info_cache)
+
+
+def little_gpu_info():
+
+    # Obtém informações da GPU (NVIDIA, AMD ou Intel) e retorna formatado para exibição
+
+    gpu_info_cache = None
+
+    # Cache das informações básicas da GPU (modelo, fabricante)
+    if gpu_info_cache is None:
+        gpu_info_cache = detect_gpu_basic_info()
+
+    # Obter informações dinâmicas (temperatura, utilização, etc.)
+    dynamic_info = get_gpu_dynamic_info(gpu_info_cache['fabricante'])
+
+    # Combinar informações básicas com dinâmicas
+    gpu_info_cache.update(dynamic_info)
+
+    return little_format_gpu_info(gpu_info_cache)
 
 
 def detect_gpu_basic_info():
@@ -238,29 +254,20 @@ def get_amd_info():
             'memoria_usada': 'N/A', 'fan_speed': 'N/A'}
 
     try:
-        # Tentar usar GPUtil
-        gpus = GPUtil.getGPUs()
-        if gpus:
-            gpu = gpus[0]
-            info['temperatura'] = f"{gpu.temperature}°C" if gpu.temperature else 'N/A'
-            info['utilizacao'] = f"{gpu.load*100:.0f}%" if gpu.load else 'N/A'
-            info['memoria_usada'] = f"{gpu.memoryUsed/1024:.1f}GB" if gpu.memoryUsed else 'N/A'
-    except:
         # AMD específico no Linux
-        try:
-            if platform.system() == "Linux":
-                # Tentar ler sensores do sistema
-                result = subprocess.run(
-                    ['sensors'], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    for line in result.stdout.split('\n'):
-                        if 'amdgpu' in line.lower() and '°C' in line:
-                            temp = line.split('°C')[0].split()[-1]
-                            if temp.replace('.', '').isdigit():
-                                info['temperatura'] = f"{temp}°C"
-                            break
-        except Exception as e:
-            print(f"Erro AMD: {e}")
+        if platform.system() == "Linux":
+            # Tentar ler sensores do sistema
+            result = subprocess.run(
+                ['sensors'], capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                for line in result.stdout.split('\n'):
+                    if 'amdgpu' in line.lower() and '°C' in line:
+                        temp = line.split('°C')[0].split()[-1]
+                        if temp.replace('.', '').isdigit():
+                            info['temperatura'] = f"{temp}°C"
+                        break
+    except Exception as e:
+        print(f"Erro AMD: {e}")
 
     return info
 
@@ -311,6 +318,28 @@ def format_gpu_info(gpu_info):
         return f" GPU\n{modelo}\n {temp}\n⚡ {util}"
 
 
+def little_format_gpu_info(littlegpu_info):
+    """Formata as informações da GPU para exibição"""
+    fabricante = littlegpu_info.get('fabricante', 'Desconhecido')
+    modelo = littlegpu_info.get('modelo', 'Não detectado')
+    temp = littlegpu_info.get('temperatura', 'N/A')
+    util = littlegpu_info.get('utilizacao', 'N/A')
+    mem_used = littlegpu_info.get('memoria_usada', 'N/A')
+    mem_total = littlegpu_info.get('memoria_total', 'N/A')
+
+    # Criar texto formatado baseado no fabricante
+    if fabricante == 'NVIDIA':
+        return f"  {modelo}  {temp}  {util}  {mem_used}/{mem_total}"
+    elif fabricante == 'AMD':
+        return f"  {modelo}  {temp}  {util}  {mem_used}"
+    elif fabricante == 'Intel':
+        return f"  {modelo}  {temp}  Integrada"
+    elif fabricante == 'Apple':
+        return f" {modelo}  {temp}  Unificada"
+    else:
+        return f" GPU {modelo}  {temp} ⚡ {util}"
+
+
 def get_network_speed(value):
     # Obtém velocidade da rede em KB
     bytes_sent = value.bytes_sent
@@ -355,14 +384,14 @@ def get_disk_used_space(value):
 def get_memory_info():
     # Obtém informações de memória
     memoria = virtual_memory()
-    return f" Memoria \n {(bytes_to_gigas(memoria.used))} / {(bytes_to_gigas(memoria.total))} / {memoria.percent}% "
+    return f"{(bytes_to_gigas(memoria.used))} / {(bytes_to_gigas(memoria.total))} / {memoria.percent}% "
 
 
 def get_cpu_info():
     # Obtém informações da CPU
     cpu_use = cpu_percent(interval=0.1)
     cpu_frq = cpu_freq()
-    return f" CPU \n{cpu_use} % / {cpu_frq.current}Ghz"
+    return f" {cpu_use} % / {cpu_frq.current}Ghz"
 
 
 def get_partition_info():
@@ -380,12 +409,13 @@ def get_partition_used():
 def get_internet_info():
     # Obtém informações da internet
     Internet = net_io_counters()
-    return f"  Internet \n   {get_network_speed(Internet)}"
+    return f"{get_network_speed(Internet)}"
 
 
 def process_info_with_pid():
-    # Versão modificada da process_info que inclui o PID
+    # Versão modificada que mostra apenas 1 processo por nome
     processos = []
+    processos_unicos = {}  # Dicionário para controlar processos únicos
     blacklist = {
         'System Idle Process', 'System', 'Registry', 'smss.exe', 'csrss.exe',
         'wininit.exe', 'services.exe', 'lsass.exe', 'svchost.exe',
@@ -400,19 +430,61 @@ def process_info_with_pid():
             if not nome or nome in blacklist or pid <= 4:
                 continue
 
+            # Se já existe um processo com esse nome, pula
+            if nome in processos_unicos:
+                continue
+
             cpu = proc.cpu_percent(interval=None)
             memoria = proc.memory_percent()
 
-            processos.append({
+            processo_info = {
                 'nome': nome,
                 'cpu': f"{cpu:.2f}%",
                 'memoria': f"{memoria:.2f}%",
                 'pid': pid
-            })
+            }
+
+            processos.append(processo_info)
+            processos_unicos[nome] = True  # Marca como já adicionado
+
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             continue
 
     return processos
+
+
+def get_all_processes_by_name(process_name):
+    # Função auxiliar para obter todos os processos com o mesmo nome
+    processos_mesmo_nome = []
+    blacklist = {
+        'System Idle Process', 'System', 'Registry', 'smss.exe', 'csrss.exe',
+        'wininit.exe', 'services.exe', 'lsass.exe', 'svchost.exe',
+        'fontdrvhost.exe', 'dwm.exe'
+    }
+
+    for proc in psutil.process_iter(['pid', 'name']):
+        try:
+            nome = proc.info['name']
+            pid = proc.info['pid']
+
+            if not nome or nome in blacklist or pid <= 4:
+                continue
+
+            if nome == process_name:
+                cpu = proc.cpu_percent(interval=None)
+                memoria = proc.memory_percent()
+
+                processos_mesmo_nome.append({
+                    'nome': nome,
+                    'cpu': f"{cpu:.2f}%",
+                    'memoria': f"{memoria:.2f}%",
+                    'pid': pid
+                })
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            continue
+
+    return processos_mesmo_nome
 
 
 def colum_cpu():
@@ -432,67 +504,120 @@ selected_process = None
 
 
 def on_item_select(event, listbox):
-    # Função chamada quando um item é selecionado na listbox
+    # Função que seleciona todos os processos com o mesmo nome
     global selected_process
     selection = listbox.selection()
     if selection:
         item = listbox.item(selection[0])
         values = item['values']
         if values:
+            process_name = values[0]
+
+            # Obtém todos os processos com o mesmo nome
+            all_processes = get_all_processes_by_name(process_name)
+
+            # Define o processo selecionado como uma lista de todos os processos com o mesmo nome
             selected_process = {
-                'nome': values[0],
-                'cpu': values[1],
-                'memoria': values[2],
-                'pid': values[3]
+                'nome': process_name,
+                'processos': all_processes,  # Lista com todos os processos
+                'quantidade': len(all_processes)
             }
 
 
 def terminate_process():
     # Função para finalizar o processo selecionado
-    global selected_process
+    global selected_process  # Precisa declarar como global para acessar a variável
 
     if not selected_process:
-        messagebox.showwarning("Aviso", "Nenhum processo selecionado!")
+        print("Aviso", "Nenhum processo selecionado!", "warning")
         return
 
     try:
-        pid = int(selected_process['pid'])
-        process_name = selected_process['nome']
+        # Verificar se selected_process tem a estrutura nova (com lista de processos)
+        if 'processos' in selected_process:
+            # Nova estrutura - finalizar todos os processos com o mesmo nome
+            processos_para_finalizar = selected_process['processos']
+            nome_processo = selected_process['nome']
+            quantidade = len(processos_para_finalizar)
 
-        # Confirmar antes de finalizar
-        resposta = messagebox.askyesno(
-            "Confirmar",
-            f"Deseja realmente finalizar o processo?\n\n"
-            f"Nome: {process_name}\n"
-            f"PID: {pid}"
-        )
+            processos_finalizados = 0
+            for processo_info in processos_para_finalizar:
+                try:
+                    pid = int(processo_info['pid'])
+                    process = psutil.Process(pid)
+                    process.terminate()
 
-        if resposta:
-            # Tentar finalizar o processo
+                    # Aguardar um pouco para o processo terminar graciosamente
+                    try:
+                        process.wait(timeout=3)
+                        processos_finalizados += 1
+                    except psutil.TimeoutExpired:
+                        # Se não terminou graciosamente, forçar encerramento
+                        process.kill()
+                        processos_finalizados += 1
+
+                except psutil.NoSuchProcess:
+                    print(
+                        f"Processo PID {processo_info['pid']} não existe mais!")
+                except psutil.AccessDenied:
+                    print(f"Acesso negado para PID {processo_info['pid']}!")
+                except Exception as e:
+                    print(
+                        f"Erro ao finalizar PID {processo_info['pid']}: {str(e)}")
+
+        else:
+            # Estrutura antiga - finalizar um processo específico
+            pid = int(selected_process['pid'])
             process = psutil.Process(pid)
             process.terminate()
 
             # Aguardar um pouco para o processo terminar graciosamente
             try:
                 process.wait(timeout=3)
-                messagebox.showinfo(
-                    "Sucesso", f"Processo '{process_name}' finalizado com sucesso!")
+                print(
+                    f"Processo {selected_process['nome']} (PID: {pid}) finalizado com sucesso!")
             except psutil.TimeoutExpired:
                 # Se não terminou graciosamente, forçar encerramento
                 process.kill()
-                messagebox.showinfo(
-                    "Sucesso", f"Processo '{process_name}' foi forçado a encerrar!")
+                print(
+                    f"Processo {selected_process['nome']} (PID: {pid}) forçado a encerrar!")
 
-            # Limpar seleção
-            selected_process = None
+        # Limpar seleção após finalizar
+        selected_process = None
 
     except psutil.NoSuchProcess:
-        messagebox.showerror("Erro", "O processo não existe mais!")
+        print("Erro", "O processo não existe mais!", "danger")
         selected_process = None
     except psutil.AccessDenied:
-        messagebox.showerror(
-            "Erro", "Acesso negado! Execute como administrador para finalizar este processo.")
+        print(
+            "Erro",
+            "Acesso negado! Execute como administrador para finalizar este processo.",
+            "danger"
+        )
     except ValueError:
-        messagebox.showerror("Erro", "PID inválido!")
+        print("Erro", "PID inválido!", "danger")
     except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao finalizar processo: {str(e)}")
+        print("Erro", f"Erro ao finalizar processo: {str(e)}", "danger")
+
+
+def user():
+    comando = [
+        "powershell",
+        "-Command",
+        "(Get-CimInstance -ClassName Win32_ComputerSystem).UserName"
+    ]
+    resultado = subprocess.run(comando, capture_output=True, text=True)
+    usuario = resultado.stdout.strip()
+
+    return f"Usuário: {usuario}"
+
+
+def uptimes():
+    boot_times = boot_time()
+    uptime_segundos = datetime.datetime.now().timestamp() - boot_times
+
+    dias = int(uptime_segundos // 86400)
+    horas = int((uptime_segundos % 86400) // 3600)
+    minutos = int((uptime_segundos % 3600) // 60)
+
+    return f"Sistema ligado há: {dias} dias, {horas} horas e {minutos} minutos"
