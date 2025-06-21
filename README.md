@@ -22,10 +22,10 @@ consta com uma tela principal do progama e uma segunda tela que server como uma 
   Clone o repositorio:  git clone https://github.com/JMarceloAL/Painel-de-Monitoramento-de-Processos-do-Sistema.git
   instale as dependência e execute o arquivo main.py
   
-## Pré-requisitos: 
+# Pré-requisitos: 
 -  Python
 - IDE interpretador Python
-# Pependências
+## Pependências
 - pip install psutil  
 - pip install py3nvml
 - pip install ttkbootstrap
