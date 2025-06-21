@@ -23,8 +23,9 @@ consta com uma tela principal do progama e uma segunda tela que server como uma 
   instale as dependência e execute o arquivo main.py
   
 ## Pré-requisitos: 
-- Imterpretador Python
-## Dependências :
+-  Python
+- IDE interpretador Python
+ Dependências :
 - pip install psutil  
 - pip install py3nvml
 - pip install ttkbootstrap
