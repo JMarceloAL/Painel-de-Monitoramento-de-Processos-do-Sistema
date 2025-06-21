@@ -25,7 +25,7 @@ consta com uma tela principal do progama e uma segunda tela que server como uma 
 ## Pré-requisitos: 
 -  Python
 - IDE interpretador Python
- Dependências :
+# Pependências
 - pip install psutil  
 - pip install py3nvml
 - pip install ttkbootstrap
